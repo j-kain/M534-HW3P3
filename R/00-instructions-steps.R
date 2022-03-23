@@ -22,6 +22,9 @@
 # c. set an appropriate value for trace of optim()
 
 
+#Let's all use tolerr= 10e-6 and tolgrad=10e-5.
+
+
 
 
 

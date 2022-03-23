@@ -40,6 +40,10 @@ log_like_mvn <- function(theta){
     t <- param_convert(theta=theta, ms_comp=TRUE)
     sigma <- t$sig
     mu <- t$mu
+                       
+    if(any(eigen(sigma)$values <= 0)){
+        sigma[,] <- -Inf
+    }
     
     C <- diff_xi_mu(mu, comp_C=TRUE)$C # C := sum of (xi-mu)(xi-mu)^T 
     
@@ -58,6 +62,10 @@ gradient <- function(theta, t_comp=TRUE, dmu_comp=FALSE, dsig_comp=FALSE){
     t <- param_convert(theta=theta, ms_comp=TRUE)
     mu <- t$mu
     sigma <- t$sig
+    
+    if(any(eigen(sigma)$values <= 0)){
+        sigma[,] <- -Inf
+    }
     
     #writeLines("\n entered in gradient function")
     sig_inv <- solve(sigma)

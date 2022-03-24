@@ -1,4 +1,5 @@
-source("R/02-gradient-mle-functions.R")
+library(devtools)
+library(here)
 
 data2 <- read.csv(here("data","censor_data.csv"))
 
@@ -28,7 +29,7 @@ gradient <- function(theta){
     da <- sum(w/a + w*log(t) - t^a*exp(b0 + b1*d)*log(t))
     db0 <- sum(w - t^a*exp(b0 + b1*d))
     db1 <- sum(d*w - d*t^a*exp(b0 + b1*d))
-    cbind(da,db0,db1)
+    rbind(da,db0,db1)
 }
 
 hessian <- function(theta){
@@ -63,44 +64,12 @@ hessian <- function(theta){
     hess
 }
 
-stop.criteria <- function(t0, t1, grad, tol.mre=1e-6, tol.grad=1e-5, itr, max.itr){
+stop.criteria <- function(t0, t1, grad, tol.mre=1e-6, tol.grad=1e-5, itr, max.itr=100){
     mre <- max(abs((t1 - t0)/pmax(1, t1)))
     gradn <- norm(grad,"2")
     stop <- ifelse(itr == max.itr | gradn < tol.grad | mre < tol.mre, TRUE, FALSE)
     list(stop=stop, norm.g=gradn)
 }
-
-step.halve <- function(data, mu, sig, t, dir.mu, dir.sig, fun, max.h, itr){
-    
-    sig1 <- theta[]
-    mu1 <- param.convert(theta=t, ms.comp=TRUE)$mu
-    
-    
-    halve = 0
-    while(any(eigen(sig1)$values < 0 & halve < max.h)){
-        halve = halve + 1
-        sig1 <- sig + dir.sig/2^halve
-    }
-    
-    mu1 <- mu + dir.mu/2^halve
-    
-    if(any(eigen(sig1)$values<0)){stop("Sigma can not be negative definite, try increasing max halves")}
-    
-    fun1 <- log.like.mvn(data, mu1, sig1)
-    
-    h = 0
-    while(fun1 < fun & h < max.h){
-        h = h + 1
-        halve = halve + 1
-        mu1 <- mu + dir.mu/2^halve
-        sig1 <- sig + dir.sig/2^halve
-        fun1 <- log.like.mvn(data, mu1, sig1)
-    }
-    list(mu1 = mu1, sig1 = sig1, halves=hprint, fun1=fun1, llh=llh)
-}
-
-#----------------------------------------------------------
-
 
 #----------------------------------------------------------
 newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
@@ -114,30 +83,47 @@ newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
         grad <- gradient(theta)
         hess <- hessian(theta)
         
-        dir <- -solve(hess) * grad
+        dir <- -solve(hess) %*% grad
         
         t1 <- theta + dir
+        fun2 <- log_like_weib(t1)
         
-        r <- step.halve(data, mu, sigma, t1, dm, ds, obj.fn, 20, itr=it)
+        #print(sprintf('it = %2.0f   halving = %#.0f    log-like = %12.4f    ||gradient|| = %#.1e', it, halve, fun2, grad_norm))
+        print("Iteration         halving        log-like            ||gradient||")
         
-        obj.fn <- r$fun1
         
-        t1 <- param.convert(mu=r$mu1, sigma=r$sig1, t.comp=TRUE)$t
+        halve = 0
+        print(c(it, halve,obj.fn))
+        print(c(it, halve,fun2))
+        while(fun2 < obj.fn & halve <= 20){
+            halve = halve + 1
+            t1 <- t0 + dir/2^halve
+            fun2 <- log.like.weib(t1)
+            print(c(it, halve,fun2))
+        }
+        if (halve >= 20) print('Step-halving failed after 20 halvings')
         
-        stop.cri <- stop.criteria(t0, t1, grad=d, tol.mre=tol.mre, tol.grad=tol.grad, itr=it, max.itr=max.itr)
+        obj.fn <- fun2
+        
+        stop.cri <- stop.criteria(theta, t1, grad=grad, itr=it)
+        grad_norm <- stop.cri$norm.g
+        
         stop <- stop.cri$stop
-        
         
         it <- it + 1
         
-        mu <- r$mu1
+        theta <- t1
         
-        sigma <- r$sig1
+        # print(sprintf('it = %2.0f   halving = %#.0f    log-like = %12.4f    ||gradient|| = %#.1e',
+        #               it, halve, fun2, grad_norm))
+        print ('-----------------------------------------')
+
     }
-    list(mu = mu, sigma=sigma)
+    theta
 }
 
-
+theta <- c(1,0,0)
+newton(theta)
 
 
 

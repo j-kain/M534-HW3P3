@@ -28,7 +28,7 @@ gradient <- function(theta){
     da <- sum(w/a + w*log(t) - t^a*exp(b0 + b1*d)*log(t))
     db0 <- sum(w - t^a*exp(b0 + b1*d))
     db1 <- sum(d*w - d*t^a*exp(b0 + b1*d))
-    rbind(da,db0,db1)
+    cbind(da,db0,db1)
 }
 
 hessian <- function(theta){
@@ -63,10 +63,79 @@ hessian <- function(theta){
     hess
 }
 
-hessian(theta)
+stop.criteria <- function(t0, t1, grad, tol.mre=1e-6, tol.grad=1e-5, itr, max.itr){
+    mre <- max(abs((t1 - t0)/pmax(1, t1)))
+    gradn <- norm(grad,"2")
+    stop <- ifelse(itr == max.itr | gradn < tol.grad | mre < tol.mre, TRUE, FALSE)
+    list(stop=stop, norm.g=gradn)
+}
+
+step.halve <- function(data, mu, sig, t, dir.mu, dir.sig, fun, max.h, itr){
+    
+    sig1 <- theta[]
+    mu1 <- param.convert(theta=t, ms.comp=TRUE)$mu
+    
+    
+    halve = 0
+    while(any(eigen(sig1)$values < 0 & halve < max.h)){
+        halve = halve + 1
+        sig1 <- sig + dir.sig/2^halve
+    }
+    
+    mu1 <- mu + dir.mu/2^halve
+    
+    if(any(eigen(sig1)$values<0)){stop("Sigma can not be negative definite, try increasing max halves")}
+    
+    fun1 <- log.like.mvn(data, mu1, sig1)
+    
+    h = 0
+    while(fun1 < fun & h < max.h){
+        h = h + 1
+        halve = halve + 1
+        mu1 <- mu + dir.mu/2^halve
+        sig1 <- sig + dir.sig/2^halve
+        fun1 <- log.like.mvn(data, mu1, sig1)
+    }
+    list(mu1 = mu1, sig1 = sig1, halves=hprint, fun1=fun1, llh=llh)
+}
+
+#----------------------------------------------------------
 
 
-
+#----------------------------------------------------------
+newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
+    
+    it <- 1
+    stop <- FALSE
+    
+    while(!stop){
+        obj.fn <- log_like_weib(theta) # set objective function        
+        
+        grad <- gradient(theta)
+        hess <- hessian(theta)
+        
+        dir <- -solve(hess) * grad
+        
+        t1 <- theta + dir
+        
+        r <- step.halve(data, mu, sigma, t1, dm, ds, obj.fn, 20, itr=it)
+        
+        obj.fn <- r$fun1
+        
+        t1 <- param.convert(mu=r$mu1, sigma=r$sig1, t.comp=TRUE)$t
+        
+        stop.cri <- stop.criteria(t0, t1, grad=d, tol.mre=tol.mre, tol.grad=tol.grad, itr=it, max.itr=max.itr)
+        stop <- stop.cri$stop
+        
+        
+        it <- it + 1
+        
+        mu <- r$mu1
+        
+        sigma <- r$sig1
+    }
+    list(mu = mu, sigma=sigma)
+}
 
 
 

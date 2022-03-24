@@ -110,7 +110,6 @@ newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
         
         theta <- t1
         
-        #print(c(it, halve,obj.fn, fun2))
         writeLines(paste("\nitr: ", it-1))
         writeLines(paste("halving   ", "log-like     ", "norm   "))
         writeLines(paste(halve, "        ", formattable(obj.fn, digits=4, format="f"), "   ", formattable(grad_norm, digits=1, format="e")))
@@ -122,14 +121,10 @@ newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
 }
 
 theta <- c(1,0,0)
-newton(theta)
-
-
-
-
-
-
-
+theta_star <- newton(theta)
+observed_info <- -solve(hessian(theta_star))
+sd_err <- sqrt(diag(observed_info))
+cov2cor(V=observed_info)
 
 
 

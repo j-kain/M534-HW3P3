@@ -94,14 +94,6 @@ gradient <- function(theta, t_comp=TRUE, dmu_comp=FALSE, dsig_comp=FALSE){
     # output options for gradient
     #list(t=if(t_comp) t, dmu=if(dmu_comp) dmu, dsig=if(dsig_comp) dsig)
 }
-#----------------------------------------------------------
-# # #FOR TESTING
-# m <- colMeans(datan); s <- (n-1)*cov(datan)/n
-# tt <- param_convert(mu=m, sigma=s, t_comp=TRUE)$t
-# 
-# g <- gradient(tt)
-# g
-
 
 
 

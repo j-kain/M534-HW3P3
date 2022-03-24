@@ -1,5 +1,5 @@
 source("R/02-gradient-mle-functions.R")
-load("data/data.rda")
+load("data/datan.rda")
 
 mu0 <- matrix(c(0,0,0), ncol=1)
 sig0 <- diag(3)

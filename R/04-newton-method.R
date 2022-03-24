@@ -39,19 +39,31 @@ hessian <- function(theta){
     w = data2$w
     d = data2$d
     
-    daa <- - w/a^2 - t^a*exp(b0 + b1*d)*log(t)^2
-    dab0 <- -t^a*exp(b0 + b1*d)*log(t)
-    dab1 <- -d*t^a*exp(b0 + b1*d)*log(t)
+    hess <- matrix(0, nrow=3, ncol=3)
     
-    db0b0 <- -t^a*exp(b0 + b1*d)
-    db0a <- -t^a*exp(b0 + b1*d)*log(t)
-    db0b1 <- -d*t^a*exp(b0 + b1*d)
-
-    db1b1 <- -d^2*t^a*exp(b0 + b1*d)
-    db1a <- -d*t^a*exp(b0 + b1*d)*log(t)
-    db1b0 <- -d*t^a*exp(b0 + b1*d)
+    daa <- sum(-w/a^2 - t^a*exp(b0 + b1*d)*log(t)^2)
+    dab0 <- sum(-t^a*exp(b0 + b1*d)*log(t))
+    dab1 <- sum(-d*t^a*exp(b0 + b1*d)*log(t))
+    fa <- cbind(daa,dab0,dab1)
+    
+    db0a <- sum(-t^a*exp(b0 + b1*d)*log(t) )   
+    db0b0 <- sum(-t^a*exp(b0 + b1*d))
+    db0b1 <- sum(-d*t^a*exp(b0 + b1*d))
+    fb0 <- cbind(dab0, db0b0, db0b1)
+    
+    db1a <- sum(-d*t^a*exp(b0 + b1*d)*log(t))
+    db1b0 <- sum(-d*t^a*exp(b0 + b1*d))    
+    db1b1 <- sum(-d^2*t^a*exp(b0 + b1*d))
+    fb1 <- cbind(dab1, db0b1, db1b1)
+    
+    hess[1,] <- fa
+    hess[2,] <- fb0
+    hess[3,] <- fb1
+    
+    hess
 }
 
+hessian(theta)
 
 
 

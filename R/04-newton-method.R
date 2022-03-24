@@ -1,5 +1,6 @@
 library(devtools)
 library(here)
+library(formattable)
 
 data2 <- read.csv(here("data","censor_data.csv"))
 
@@ -87,19 +88,13 @@ newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
         
         t1 <- theta + dir
         fun2 <- log_like_weib(t1)
-        
-        #print(sprintf('it = %2.0f   halving = %#.0f    log-like = %12.4f    ||gradient|| = %#.1e', it, halve, fun2, grad_norm))
-        print("Iteration         halving        log-like            ||gradient||")
-        
-        
+
         halve = 0
-        print(c(it, halve,obj.fn))
-        print(c(it, halve,fun2))
         while(fun2 < obj.fn & halve <= 20){
             halve = halve + 1
             t1 <- t0 + dir/2^halve
             fun2 <- log.like.weib(t1)
-            print(c(it, halve,fun2))
+            print(c(it, halve))
         }
         if (halve >= 20) print('Step-halving failed after 20 halvings')
         
@@ -108,14 +103,18 @@ newton <- function(theta, tol.grad=1e-5, tol.mre=1e-6, max.itr=50){
         stop.cri <- stop.criteria(theta, t1, grad=grad, itr=it)
         grad_norm <- stop.cri$norm.g
         
+        
         stop <- stop.cri$stop
         
         it <- it + 1
         
         theta <- t1
         
-        # print(sprintf('it = %2.0f   halving = %#.0f    log-like = %12.4f    ||gradient|| = %#.1e',
-        #               it, halve, fun2, grad_norm))
+        #print(c(it, halve,obj.fn, fun2))
+        writeLines(paste("\nitr: ", it))
+        writeLines(paste("halving   ", "log-like     ", "norm   "))
+        writeLines(paste(halve, "        ", formattable(obj.fn, digits=4, format="f"), "   ", formattable(grad_norm, digits=1, format="e")))
+        
         print ('-----------------------------------------')
 
     }
